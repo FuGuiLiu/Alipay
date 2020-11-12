@@ -1,0 +1,5 @@
+target/
+*.class
+*.properties
+*.yml
+!application-test.yml
