@@ -3,6 +3,7 @@ package com.sky.boot.controller;
 import com.alipay.api.AlipayApiException;
 import com.alipay.api.AlipayClient;
 import com.alipay.api.DefaultAlipayClient;
+import com.alipay.api.internal.util.AlipaySignature;
 import com.alipay.api.request.AlipayTradePagePayRequest;
 import com.sky.boot.entity.Bill;
 import com.sky.boot.util.AlipayTool;
@@ -30,7 +31,7 @@ public class PayController {
 
     @PostMapping(value = "/pay")
     @ResponseBody
-    public String pay(@Valid Bill bill, BindingResult bindingResult, HttpServletRequest httpRequest,
+    public String pay(@Valid Bill bill, BindingResult bindingResult, HttpServletRequest request,
                       HttpServletResponse httpResponse, Model model) throws Exception {
 
 // TODO: 2020/11/12 判断传入的信息是否正确
@@ -45,9 +46,8 @@ public class PayController {
                 return "error";
             }
         }
-        System.out.println(alipayTool.toString());
         //获得初始化的AlipayClient
-        AlipayClient alipayClient = new DefaultAlipayClient(alipayTool.gatewayUrl, alipayTool.appId, alipayTool.merchantPrivateKey.trim(), "json", alipayTool.charset, alipayTool.alipayPublicKey, alipayTool.signType);
+        AlipayClient alipayClient = new DefaultAlipayClient(alipayTool.gatewayUrl, alipayTool.appId, alipayTool.merchantPrivateKey, "json", alipayTool.charset, alipayTool.alipayPublicKey, alipayTool.signType);
 
         //设置请求参数
         AlipayTradePagePayRequest alipayRequest = new AlipayTradePagePayRequest();
@@ -59,22 +59,20 @@ public class PayController {
                 + "\"subject\":\"" + bill.getOrderName() + "\","
                 + "\"body\":\"" + bill.getOrderDescription() + "\","
                 + "\"product_code\":\"FAST_INSTANT_TRADE_PAY\"}");
-
         String form = "";
         try {
-            form = alipayClient.pageExecute(alipayRequest).getBody();  //调用SDK生成表单
+            //调用SDK生成表单
+            form = alipayClient.pageExecute(alipayRequest).getBody();
         } catch (AlipayApiException e) {
             e.printStackTrace();
         }
         httpResponse.setContentType("text/html;charset=" + alipayTool.charset);
-        httpResponse.getWriter().write(form); //直接将完整的表单html输出到页面
+        System.out.println(form);
+        // 直接将完整的表单html输出到页面
+        httpResponse.getWriter().write(form);
         httpResponse.getWriter().flush();
         httpResponse.getWriter().close();
 
-        //输出
-        // System.out.println(result);
-        // model.addAttribute("result", result);
-        // return "alipay.trade.page.pay";
         return null;
     }
 }
